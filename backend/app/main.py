@@ -53,14 +53,17 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:8080",
         "http://localhost:3000",
-        # Add your production URLs here
+        "http://localhost:5173",  # Vite default dev port
+        # Add your specific production URLs here:
         # "https://your-frontend.vercel.app",
         # "https://your-frontend.netlify.app",
         # "https://your-frontend.onrender.com",
     ],
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Match any Vercel subdomain (production + previews)
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],  # Explicitly include OPTIONS
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Initialize services
