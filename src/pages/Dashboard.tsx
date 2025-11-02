@@ -107,8 +107,8 @@ const Dashboard = () => {
         .order('analyzed_at', { ascending: false })
         .limit(10);
 
-      let healthScore = 92;
-      let healthStatus = 'Healthy';
+      let healthScore = 0;
+      let healthStatus = 'No Data';
       let lastCheck = 'No checks yet';
 
       if (!healthError && healthData && healthData.length > 0) {
@@ -154,15 +154,10 @@ const Dashboard = () => {
         }
       }
 
-      // Use defaults if harvest window not found
-      if (!harvestWindow) {
-        harvestWindow = 'Oct 28 - Nov 07, 2025';
-      }
-
       setStats({
         healthScore,
         harvestWindow,
-        efficiencyScore: efficiencyScore || 87,
+        efficiencyScore: efficiencyScore || 0,
         totalFields,
         totalArea,
         recentActivities: []
@@ -239,15 +234,25 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Badge variant="default" className={
-                    healthStatus === 'Healthy' ? 'bg-success text-success-foreground mb-2' :
-                    healthStatus === 'Moderate' ? 'bg-warning text-warning-foreground mb-2' :
-                    'bg-destructive text-destructive-foreground mb-2'
-                  }>
-                    {healthStatus}
-                  </Badge>
-                  <p className="text-xs text-muted-foreground">Last checked: {lastHealthCheck}</p>
-                  <Progress value={stats.healthScore} className="mt-2" />
+                  {stats.totalFields === 0 ? (
+                    <>
+                      <div className="text-3xl font-bold text-muted-foreground">--</div>
+                      <p className="text-xs text-muted-foreground mt-1">Add fields to check health</p>
+                    </>
+                  ) : (
+                    <>
+                      <Badge variant="default" className={
+                        healthStatus === 'Healthy' ? 'bg-success text-success-foreground mb-2' :
+                        healthStatus === 'Moderate' ? 'bg-warning text-warning-foreground mb-2' :
+                        healthStatus === 'At Risk' ? 'bg-destructive text-destructive-foreground mb-2' :
+                        'bg-muted text-muted-foreground mb-2'
+                      }>
+                        {healthStatus}
+                      </Badge>
+                      <p className="text-xs text-muted-foreground">Last checked: {lastHealthCheck}</p>
+                      {stats.healthScore > 0 && <Progress value={stats.healthScore} className="mt-2" />}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </Link>
@@ -261,13 +266,22 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-foreground">{stats.harvestWindow || '--'}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {new Date().getFullYear()}
-                  </p>
-                  <p className="text-xs text-info mt-2">
-                    {stats.totalFields > 0 ? 'Weather conditions favorable' : 'Add fields to see timing'}
-                  </p>
+                  {stats.totalFields === 0 ? (
+                    <>
+                      <div className="text-2xl font-bold text-muted-foreground">--</div>
+                      <p className="text-xs text-muted-foreground mt-1">Add fields to see timing</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-2xl font-bold text-foreground">{stats.harvestWindow || '--'}</div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date().getFullYear()}
+                      </p>
+                      <p className="text-xs text-info mt-2">
+                        Weather conditions favorable
+                      </p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </Link>
@@ -281,11 +295,22 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-foreground">{stats.efficiencyScore}%</div>
-                  <p className="text-xs text-muted-foreground mt-1">vs regional average</p>
-                  <Badge variant="secondary" className="mt-2">
-                    {stats.efficiencyScore >= 80 ? 'Above Average' : stats.efficiencyScore >= 70 ? 'Average' : 'Below Average'}
-                  </Badge>
+                  {stats.totalFields === 0 ? (
+                    <>
+                      <div className="text-3xl font-bold text-muted-foreground">--</div>
+                      <p className="text-xs text-muted-foreground mt-1">Add fields to see efficiency</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-3xl font-bold text-foreground">{stats.efficiencyScore || '--'}%</div>
+                      <p className="text-xs text-muted-foreground mt-1">vs regional average</p>
+                      {stats.efficiencyScore > 0 && (
+                        <Badge variant="secondary" className="mt-2">
+                          {stats.efficiencyScore >= 80 ? 'Above Average' : stats.efficiencyScore >= 70 ? 'Average' : 'Below Average'}
+                        </Badge>
+                      )}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </Link>
@@ -317,11 +342,15 @@ const Dashboard = () => {
                 </div>
                 <Progress value={stats.totalArea > 0 ? Math.min(100, stats.totalArea * 10) : 0} />
                 
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Health Score</span>
-                  <span className="font-semibold text-success">{stats.healthScore}%</span>
-                </div>
-                <Progress value={stats.healthScore} />
+                {stats.totalFields > 0 && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Health Score</span>
+                      <span className="font-semibold text-success">{stats.healthScore > 0 ? `${stats.healthScore}%` : 'No data'}</span>
+                    </div>
+                    {stats.healthScore > 0 && <Progress value={stats.healthScore} />}
+                  </>
+                )}
 
                 <div className="mt-4 p-4 bg-muted/50 rounded-lg">
                   <p className="text-sm text-foreground">

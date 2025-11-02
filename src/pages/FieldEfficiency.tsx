@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { API_ENDPOINTS } from "@/config/api";
+import { Link } from "react-router-dom";
 
 const COLORS = ['hsl(var(--success))', 'hsl(var(--success))', 'hsl(var(--warning))'];
 
@@ -33,12 +34,12 @@ const FieldEfficiency = () => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [radarData, setRadarData] = useState<any[]>([]);
   const [overallMetrics, setOverallMetrics] = useState({
-    overall_efficiency: 87,
-    water_efficiency: 87,
-    fertilizer_efficiency: 85,
-    cost_per_quintal: 842,
+    overall_efficiency: 0,
+    water_efficiency: 0,
+    fertilizer_efficiency: 0,
+    cost_per_quintal: 0,
     regional_avg: 76,
-    improvement: 11
+    improvement: 0
   });
   const { user } = useAuth();
 
@@ -145,12 +146,7 @@ const FieldEfficiency = () => {
       if (chartComparisonData.length > 0) {
         setChartData(chartComparisonData.slice(0, 3));
       } else {
-        // Use defaults for chart
-        setChartData([
-          { field: "Field A", efficiency: 92, regional: 76 },
-          { field: "Field B", efficiency: 88, regional: 76 },
-          { field: "Field C", efficiency: 68, regional: 76 },
-        ]);
+        setChartData([]);
       }
 
       // Calculate overall metrics
@@ -166,6 +162,16 @@ const FieldEfficiency = () => {
           cost_per_quintal: 842,
           regional_avg: 76,
           improvement: Math.round(avgEfficiency - 76)
+        });
+      } else {
+        // Reset to zeros when no fields
+        setOverallMetrics({
+          overall_efficiency: 0,
+          water_efficiency: 0,
+          fertilizer_efficiency: 0,
+          cost_per_quintal: 0,
+          regional_avg: 76,
+          improvement: 0
         });
       }
 
@@ -209,35 +215,27 @@ const FieldEfficiency = () => {
           }
         } catch (error) {
           console.error('Error getting resource breakdown:', error);
-          // Use default radar data
-          setRadarData([
-            { category: "Water Use", yourField: 87, regional: 68 },
-            { category: "Fertilizer", yourField: 85, regional: 72 },
-            { category: "Labor", yourField: 78, regional: 75 },
-            { category: "Energy", yourField: 82, regional: 70 },
-            { category: "Pest Control", yourField: 90, regional: 73 },
-            { category: "Yield/Cost", yourField: 89, regional: 71 },
-          ]);
+          setRadarData([]);
         }
+      } else {
+        setRadarData([]);
       }
 
     } catch (error: any) {
       console.error('Error fetching field efficiency:', error);
       toast.error("Failed to load field efficiency data");
-      // Use default data on error
-      setEfficiencyData([
-        { id: 'field-a', name: "Field A", crop_type: "Wheat", area_acres: 5.2, efficiency: 92, water_efficiency: 89, fertilizer_efficiency: 90, labor_efficiency: 85, energy_efficiency: 82, cost_per_quintal: 798 },
-        { id: 'field-b', name: "Field B", crop_type: "Rice", area_acres: 3.8, efficiency: 88, water_efficiency: 86, fertilizer_efficiency: 88, labor_efficiency: 82, energy_efficiency: 80, cost_per_quintal: 845 },
-        { id: 'field-c', name: "Field C", crop_type: "Vegetables", area_acres: 2.5, efficiency: 68, water_efficiency: 72, fertilizer_efficiency: 68, labor_efficiency: 65, energy_efficiency: 75, cost_per_quintal: 1124 },
-      ]);
-      setRadarData([
-        { category: "Water Use", yourField: 87, regional: 68 },
-        { category: "Fertilizer", yourField: 85, regional: 72 },
-        { category: "Labor", yourField: 78, regional: 75 },
-        { category: "Energy", yourField: 82, regional: 70 },
-        { category: "Pest Control", yourField: 90, regional: 73 },
-        { category: "Yield/Cost", yourField: 89, regional: 71 },
-      ]);
+      // Reset data on error
+      setEfficiencyData([]);
+      setChartData([]);
+      setRadarData([]);
+      setOverallMetrics({
+        overall_efficiency: 0,
+        water_efficiency: 0,
+        fertilizer_efficiency: 0,
+        cost_per_quintal: 0,
+        regional_avg: 76,
+        improvement: 0
+      });
     } finally {
       setLoading(false);
     }
@@ -270,321 +268,345 @@ const FieldEfficiency = () => {
           </div>
 
           {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="shadow-soft">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Overall Efficiency</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">Loading...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-3xl font-bold text-foreground">{overallMetrics.overall_efficiency}%</div>
-                    <p className="text-xs text-muted-foreground mt-1">vs {overallMetrics.regional_avg}% regional avg</p>
-                    <div className="flex items-center gap-1 mt-2">
-                      <TrendingUp className="w-3 h-3 text-success" />
-                      <span className="text-xs text-success">
-                        {overallMetrics.improvement > 0 ? '+' : ''}{overallMetrics.improvement}% above average
-                      </span>
+          {fields.length === 0 ? (
+            <Card className="shadow-medium mb-8">
+              <CardContent className="py-12 text-center">
+                <p className="text-muted-foreground mb-2">No fields added yet</p>
+                <p className="text-sm text-muted-foreground mb-4">Add fields to see efficiency metrics</p>
+                <Link to="/fields">
+                  <Button variant="hero">Add Your First Field</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <Card className="shadow-soft">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Overall Efficiency</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Loading...</span>
                     </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                  ) : overallMetrics.overall_efficiency > 0 ? (
+                    <>
+                      <div className="text-3xl font-bold text-foreground">{overallMetrics.overall_efficiency}%</div>
+                      <p className="text-xs text-muted-foreground mt-1">vs {overallMetrics.regional_avg}% regional avg</p>
+                      <div className="flex items-center gap-1 mt-2">
+                        <TrendingUp className="w-3 h-3 text-success" />
+                        <span className="text-xs text-success">
+                          {overallMetrics.improvement > 0 ? '+' : ''}{overallMetrics.improvement}% above average
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-3xl font-bold text-muted-foreground">--</div>
+                      <p className="text-xs text-muted-foreground mt-1">No data available</p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
 
-            <Card className="shadow-soft">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Water Efficiency</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">Loading...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-3xl font-bold text-foreground">{overallMetrics.water_efficiency}%</div>
-                    <p className="text-xs text-muted-foreground mt-1">irrigation optimization</p>
-                    <Badge variant="default" className={`${getRatingColor(overallMetrics.water_efficiency)} mt-2`}>
-                      {getRatingBadge(overallMetrics.water_efficiency)}
-                    </Badge>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-soft">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Nutrient Efficiency</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">Loading...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-3xl font-bold text-foreground">{overallMetrics.fertilizer_efficiency}%</div>
-                    <p className="text-xs text-muted-foreground mt-1">fertilizer utilization</p>
-                    <Badge variant="default" className={`${getRatingColor(overallMetrics.fertilizer_efficiency)} mt-2`}>
-                      {getRatingBadge(overallMetrics.fertilizer_efficiency)}
-                    </Badge>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-soft">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Cost per Quintal</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">Loading...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-3xl font-bold text-foreground">₹{overallMetrics.cost_per_quintal}</div>
-                    <p className="text-xs text-muted-foreground mt-1">vs ₹968 regional</p>
-                    <div className="flex items-center gap-1 mt-2">
-                      <Award className="w-3 h-3 text-success" />
-                      <span className="text-xs text-success">13% lower cost</span>
+              <Card className="shadow-soft">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Water Efficiency</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Loading...</span>
                     </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                  ) : overallMetrics.water_efficiency > 0 ? (
+                    <>
+                      <div className="text-3xl font-bold text-foreground">{overallMetrics.water_efficiency}%</div>
+                      <p className="text-xs text-muted-foreground mt-1">irrigation optimization</p>
+                      <Badge variant="default" className={`${getRatingColor(overallMetrics.water_efficiency)} mt-2`}>
+                        {getRatingBadge(overallMetrics.water_efficiency)}
+                      </Badge>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-3xl font-bold text-muted-foreground">--</div>
+                      <p className="text-xs text-muted-foreground mt-1">No data available</p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-soft">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Nutrient Efficiency</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Loading...</span>
+                    </div>
+                  ) : overallMetrics.fertilizer_efficiency > 0 ? (
+                    <>
+                      <div className="text-3xl font-bold text-foreground">{overallMetrics.fertilizer_efficiency}%</div>
+                      <p className="text-xs text-muted-foreground mt-1">fertilizer utilization</p>
+                      <Badge variant="default" className={`${getRatingColor(overallMetrics.fertilizer_efficiency)} mt-2`}>
+                        {getRatingBadge(overallMetrics.fertilizer_efficiency)}
+                      </Badge>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-3xl font-bold text-muted-foreground">--</div>
+                      <p className="text-xs text-muted-foreground mt-1">No data available</p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-soft">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Cost per Quintal</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Loading...</span>
+                    </div>
+                  ) : overallMetrics.cost_per_quintal > 0 ? (
+                    <>
+                      <div className="text-3xl font-bold text-foreground">₹{overallMetrics.cost_per_quintal}</div>
+                      <p className="text-xs text-muted-foreground mt-1">vs ₹968 regional</p>
+                      <div className="flex items-center gap-1 mt-2">
+                        <Award className="w-3 h-3 text-success" />
+                        <span className="text-xs text-success">13% lower cost</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-3xl font-bold text-muted-foreground">--</div>
+                      <p className="text-xs text-muted-foreground mt-1">No data available</p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Field Comparison */}
-            <Card className="shadow-medium">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Gauge className="w-5 h-5 text-primary" />
-                  Field-by-Field Efficiency
-                </CardTitle>
-                <CardDescription>
-                  Your fields compared to regional average
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="field" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))', 
-                        border: '1px solid hsl(var(--border))' 
-                      }} 
-                    />
-                    <Legend />
-                    <Bar dataKey="efficiency" name="Your Efficiency %" radius={[8, 8, 0, 0]}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                    <Bar 
-                      dataKey="regional" 
-                      name="Regional Average %" 
-                      fill="hsl(var(--muted))" 
-                      radius={[8, 8, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+          {fields.length > 0 && efficiencyData.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              {/* Field Comparison */}
+              <Card className="shadow-medium">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Gauge className="w-5 h-5 text-primary" />
+                    Field-by-Field Efficiency
+                  </CardTitle>
+                  <CardDescription>
+                    Your fields compared to regional average
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                        <XAxis dataKey="field" stroke="hsl(var(--muted-foreground))" />
+                        <YAxis stroke="hsl(var(--muted-foreground))" />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))', 
+                            border: '1px solid hsl(var(--border))' 
+                          }} 
+                        />
+                        <Legend />
+                        <Bar dataKey="efficiency" name="Your Efficiency %" radius={[8, 8, 0, 0]}>
+                          {chartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Bar>
+                        <Bar 
+                          dataKey="regional" 
+                          name="Regional Average %" 
+                          fill="hsl(var(--muted))" 
+                          radius={[8, 8, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                      No chart data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-            {/* Resource Analysis */}
-            <Card className="shadow-medium">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-primary" />
-                  Resource Efficiency Breakdown
-                </CardTitle>
-                <CardDescription>
-                  Multi-dimensional efficiency analysis
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="hsl(var(--border))" />
-                    <PolarAngleAxis 
-                      dataKey="category" 
-                      stroke="hsl(var(--muted-foreground))"
-                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                    />
-                    <PolarRadiusAxis 
-                      angle={90} 
-                      domain={[0, 100]} 
-                      stroke="hsl(var(--muted-foreground))"
-                    />
-                    <Radar 
-                      name="Your Fields" 
-                      dataKey="yourField" 
-                      stroke="hsl(var(--primary))" 
-                      fill="hsl(var(--primary))" 
-                      fillOpacity={0.3}
-                      strokeWidth={2}
-                    />
-                    <Radar 
-                      name="Regional Avg" 
-                      dataKey="regional" 
-                      stroke="hsl(var(--muted-foreground))" 
-                      fill="hsl(var(--muted))" 
-                      fillOpacity={0.2}
-                      strokeWidth={2}
-                    />
-                    <Legend />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))', 
-                        border: '1px solid hsl(var(--border))' 
-                      }} 
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
+              {/* Resource Analysis */}
+              <Card className="shadow-medium">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="w-5 h-5 text-primary" />
+                    Resource Efficiency Breakdown
+                  </CardTitle>
+                  <CardDescription>
+                    Multi-dimensional efficiency analysis
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {radarData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <RadarChart data={radarData}>
+                        <PolarGrid stroke="hsl(var(--border))" />
+                        <PolarAngleAxis 
+                          dataKey="category" 
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                        />
+                        <PolarRadiusAxis 
+                          angle={90} 
+                          domain={[0, 100]} 
+                          stroke="hsl(var(--muted-foreground))"
+                        />
+                        <Radar 
+                          name="Your Fields" 
+                          dataKey="yourField" 
+                          stroke="hsl(var(--primary))" 
+                          fill="hsl(var(--primary))" 
+                          fillOpacity={0.3}
+                          strokeWidth={2}
+                        />
+                        <Radar 
+                          name="Regional Avg" 
+                          dataKey="regional" 
+                          stroke="hsl(var(--muted-foreground))" 
+                          fill="hsl(var(--muted))" 
+                          fillOpacity={0.2}
+                          strokeWidth={2}
+                        />
+                        <Legend />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))', 
+                            border: '1px solid hsl(var(--border))' 
+                          }} 
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                      No radar data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Detailed Metrics */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {/* Water Usage */}
-            <Card className="shadow-medium">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Droplets className="w-5 h-5 text-info" />
-                  Water Usage Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Irrigation Efficiency</span>
-                    <span className="font-semibold text-foreground">87%</span>
-                  </div>
-                  <Progress value={87} />
-                </div>
+          {fields.length > 0 && efficiencyData.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              {/* Water Usage */}
+              <Card className="shadow-medium">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Droplets className="w-5 h-5 text-info" />
+                    Water Usage Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {overallMetrics.water_efficiency > 0 ? (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Irrigation Efficiency</span>
+                          <span className="font-semibold text-foreground">{overallMetrics.water_efficiency}%</span>
+                        </div>
+                        <Progress value={overallMetrics.water_efficiency} />
+                      </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Water per Quintal</span>
-                    <span className="font-semibold text-foreground">2,340 L</span>
-                  </div>
-                  <p className="text-xs text-success">18% below regional average</p>
-                </div>
+                      <div className="p-3 bg-info/10 rounded-lg">
+                        <p className="text-xs text-foreground">
+                          <strong>Insight:</strong> Monitor water usage and consider optimizing irrigation practices.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No water efficiency data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Drip System Coverage</span>
-                    <span className="font-semibold text-foreground">78%</span>
-                  </div>
-                  <Progress value={78} />
-                </div>
+              {/* Fertilizer Efficiency */}
+              <Card className="shadow-medium">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Gauge className="w-5 h-5 text-success" />
+                    Fertilizer Optimization
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {overallMetrics.fertilizer_efficiency > 0 ? (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Nutrient Use Efficiency</span>
+                          <span className="font-semibold text-foreground">{overallMetrics.fertilizer_efficiency}%</span>
+                        </div>
+                        <Progress value={overallMetrics.fertilizer_efficiency} />
+                      </div>
 
-                <div className="p-3 bg-info/10 rounded-lg">
-                  <p className="text-xs text-foreground">
-                    <strong>Insight:</strong> Your water efficiency is excellent. Consider expanding drip irrigation to Field C for further improvement.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                      <div className="p-3 bg-success/10 rounded-lg">
+                        <p className="text-xs text-foreground">
+                          <strong>Insight:</strong> Continue monitoring fertilizer usage for optimal efficiency.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No fertilizer efficiency data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-            {/* Fertilizer Efficiency */}
-            <Card className="shadow-medium">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Gauge className="w-5 h-5 text-success" />
-                  Fertilizer Optimization
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Nutrient Use Efficiency</span>
-                    <span className="font-semibold text-foreground">85%</span>
-                  </div>
-                  <Progress value={85} />
-                </div>
+              {/* Productivity Metrics */}
+              <Card className="shadow-medium">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-warning" />
+                    Productivity Score
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {overallMetrics.overall_efficiency > 0 ? (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Overall Efficiency</span>
+                          <span className="font-semibold text-foreground">{overallMetrics.overall_efficiency}%</span>
+                        </div>
+                        <Progress value={overallMetrics.overall_efficiency} />
+                      </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Cost per Acre</span>
-                    <span className="font-semibold text-foreground">₹3,845</span>
-                  </div>
-                  <p className="text-xs text-success">12% below regional average</p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Soil Test Compliance</span>
-                    <span className="font-semibold text-foreground">100%</span>
-                  </div>
-                  <Progress value={100} />
-                </div>
-
-                <div className="p-3 bg-success/10 rounded-lg">
-                  <p className="text-xs text-foreground">
-                    <strong>Insight:</strong> Excellent fertilizer management. Your soil-test-based approach is paying dividends.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Productivity Metrics */}
-            <Card className="shadow-medium">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-warning" />
-                  Productivity Score
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Yield per Investment</span>
-                    <span className="font-semibold text-foreground">89%</span>
-                  </div>
-                  <Progress value={89} />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Labor Efficiency</span>
-                    <span className="font-semibold text-foreground">78%</span>
-                  </div>
-                  <p className="text-xs text-info">On par with regional average</p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Energy Efficiency</span>
-                    <span className="font-semibold text-foreground">82%</span>
-                  </div>
-                  <Progress value={82} />
-                </div>
-
-                <div className="p-3 bg-warning/10 rounded-lg">
-                  <p className="text-xs text-foreground">
-                    <strong>Insight:</strong> Consider mechanization options for Field C to improve labor efficiency.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                      <div className="p-3 bg-warning/10 rounded-lg">
+                        <p className="text-xs text-foreground">
+                          <strong>Insight:</strong> Track field performance metrics to improve productivity.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No productivity data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Field Details */}
           <Card className="shadow-medium">
@@ -601,10 +623,13 @@ const FieldEfficiency = () => {
                 </div>
               ) : efficiencyData.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">No field data available</p>
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-muted-foreground mb-2">No field data available</p>
+                  <p className="text-sm text-muted-foreground mb-4">
                     Add fields in the Fields page to see efficiency metrics
                   </p>
+                  <Link to="/fields">
+                    <Button variant="hero">Add Fields</Button>
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -666,12 +691,6 @@ const FieldEfficiency = () => {
                       </div>
                     );
                   })}
-                  
-                  {efficiencyData.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No fields to display. Add fields to see efficiency metrics.
-                    </div>
-                  )}
                 </div>
               )}
 
