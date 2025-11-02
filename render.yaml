@@ -1,0 +1,34 @@
+# Render deployment configuration for Precision Farm Pro
+
+# Backend Service (FastAPI)
+services:
+  - type: web
+    name: precision-farm-backend
+    env: python
+    region: singapore
+    plan: free  # Change to 'starter' or 'standard' for production
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: PORT
+        value: 8000
+
+# Frontend Service (Static Site) - Alternative deployment
+  - type: web
+    name: precision-farm-frontend
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview -- --port $PORT --host
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: VITE_API_URL
+        fromService:
+          name: precision-farm-backend
+          type: web
+          property: host
+
