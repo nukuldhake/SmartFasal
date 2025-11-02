@@ -421,3 +421,4 @@ class HarvestPlanningService:
             'days_remaining': harvest_plan['days_remaining']
         }
 
+

@@ -33,3 +33,4 @@ COMMENT ON COLUMN public.fields.harvest_date IS 'Date when harvest was completed
 COMMENT ON COLUMN public.fields.labor_hours IS 'Total labor hours per acre';
 COMMENT ON COLUMN public.fields.fuel_liters IS 'Total fuel used per acre in liters';
 
+
