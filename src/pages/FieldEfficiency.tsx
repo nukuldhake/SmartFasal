@@ -46,6 +46,8 @@ const FieldEfficiency = () => {
   useEffect(() => {
     if (user) {
       fetchFieldEfficiency();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
@@ -69,6 +71,9 @@ const FieldEfficiency = () => {
 
       for (const field of fieldsData || []) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          
           const response = await fetch(API_ENDPOINTS.calculateEfficiency, {
             method: 'POST',
             headers: {
@@ -87,8 +92,11 @@ const FieldEfficiency = () => {
               cost_per_acre: field.cost_per_acre || null,
               labor_hours: field.labor_hours || null,
               fuel_liters: field.fuel_liters || null
-            })
+            }),
+            signal: controller.signal
           });
+          
+          clearTimeout(timeoutId);
 
           if (!response.ok) throw new Error('Failed to calculate efficiency');
 
@@ -112,24 +120,13 @@ const FieldEfficiency = () => {
               regional: efficiency.regional_avg
             });
           }
-        } catch (error) {
-          console.error(`Error calculating efficiency for field ${field.id}:`, error);
-          // Use fallback data for this field
-          fieldEfficiencies.push({
-            ...field,
-            efficiency: 75 + Math.random() * 20,
-            water_efficiency: 80,
-            fertilizer_efficiency: 75,
-            labor_efficiency: 78,
-            energy_efficiency: 82,
-            cost_per_quintal: 900
-          });
-
-          fieldComparisonData.push({
-            field: field.name || field.crop_type,
-            efficiency: 75 + Math.random() * 20,
-            regional: 76
-          });
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            console.error(`Efficiency calculation timeout for field ${field.id}`);
+          } else {
+            console.error(`Error calculating efficiency for field ${field.id}:`, error);
+          }
+          // Skip this field if there's an error - don't add fake data
         }
       }
 
@@ -179,6 +176,9 @@ const FieldEfficiency = () => {
       if (fieldEfficiencies.length > 0) {
         const firstField = fieldEfficiencies[0];
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          
           const breakdownResponse = await fetch(API_ENDPOINTS.resourceBreakdown, {
             method: 'POST',
             headers: {
@@ -196,8 +196,11 @@ const FieldEfficiency = () => {
               cost_per_acre: firstField.cost_per_acre || null,
               labor_hours: firstField.labor_hours || null,
               fuel_liters: firstField.fuel_liters || null
-            })
+            }),
+            signal: controller.signal
           });
+          
+          clearTimeout(timeoutId);
 
           if (breakdownResponse.ok) {
             const breakdownResult = await breakdownResponse.json();
@@ -213,8 +216,12 @@ const FieldEfficiency = () => {
               ]);
             }
           }
-        } catch (error) {
-          console.error('Error getting resource breakdown:', error);
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            console.error('Resource breakdown timeout');
+          } else {
+            console.error('Error getting resource breakdown:', error);
+          }
           setRadarData([]);
         }
       } else {

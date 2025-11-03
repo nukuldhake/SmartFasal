@@ -46,8 +46,11 @@ const Dashboard = () => {
   useEffect(() => {
     if (user) {
       fetchDashboardData();
+    } else if (!authLoading) {
+      // Only set loading to false if auth check is complete and no user
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -70,6 +73,9 @@ const Dashboard = () => {
       let efficiencyScore = 0;
       if (fieldsData && fieldsData.length > 0) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          
           const efficiencyResponse = await fetch(API_ENDPOINTS.calculateEfficiency, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -85,8 +91,11 @@ const Dashboard = () => {
               cost_per_acre: fieldsData[0].cost_per_acre || null,
               labor_hours: fieldsData[0].labor_hours || null,
               fuel_liters: fieldsData[0].fuel_liters || null
-            })
+            }),
+            signal: controller.signal
           });
+          
+          clearTimeout(timeoutId);
 
           if (efficiencyResponse.ok) {
             const efficiencyResult = await efficiencyResponse.json();
@@ -94,8 +103,12 @@ const Dashboard = () => {
               efficiencyScore = Math.round(efficiencyResult.efficiency.overall_efficiency);
             }
           }
-        } catch (error) {
-          console.error('Error calculating efficiency:', error);
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            console.error('Efficiency calculation timeout');
+          } else {
+            console.error('Error calculating efficiency:', error);
+          }
         }
       }
 
@@ -131,14 +144,20 @@ const Dashboard = () => {
       let harvestWindow = '';
       if (fieldsData && fieldsData.length > 0) {
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          
           const harvestResponse = await fetch(API_ENDPOINTS.planHarvest, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               planting_date: fieldsData[0].planting_date,
               crop_type: fieldsData[0].crop_type
-            })
+            }),
+            signal: controller.signal
           });
+          
+          clearTimeout(timeoutId);
 
           if (harvestResponse.ok) {
             const harvestResult = await harvestResponse.json();
@@ -149,8 +168,12 @@ const Dashboard = () => {
               harvestWindow = `${startDate} - ${endDate}`;
             }
           }
-        } catch (error) {
-          console.error('Error getting harvest window:', error);
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            console.error('Harvest planning timeout');
+          } else {
+            console.error('Error getting harvest window:', error);
+          }
         }
       }
 
