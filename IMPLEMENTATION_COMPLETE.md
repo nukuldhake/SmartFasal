@@ -200,3 +200,7 @@ Expected result: ~60-70% efficiency (lower water/labor scores)
 
 **Next step**: Run the database migration! 🎯
 
+
+
+
+

@@ -36,3 +36,4 @@ COMMENT ON COLUMN public.fields.fuel_liters IS 'Total fuel used per acre in lite
 
 
 
+

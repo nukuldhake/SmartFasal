@@ -296,3 +296,7 @@ All models trained, exported, loaded, and serving predictions with 99.6% accurac
 You can now get AI-powered crop recommendations based on soil and weather conditions!
 
 
+
+
+
+

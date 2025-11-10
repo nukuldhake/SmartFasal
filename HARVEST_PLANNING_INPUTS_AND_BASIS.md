@@ -290,3 +290,7 @@ Result: Customized recommendations for your area
 
 All from just **2 inputs**: what crop and when you planted it! 🌾
 
+
+
+
+

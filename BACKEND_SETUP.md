@@ -33,7 +33,7 @@ Create a `.env.local` file in your project root:
 
 ```env
 # Supabase Configuration
-VITE_SUPABASE_URL=https://hhctinfwuemapjrsiusz.supabase.co
+VITE_SUPABASE_URL=https://onjutcobianffzeykmwm.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key_here
 
 # Supabase Service Role (for Edge Functions)

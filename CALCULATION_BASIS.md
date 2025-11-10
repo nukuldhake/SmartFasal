@@ -306,3 +306,7 @@ Based on **Government of India Agriculture Statistics**:
 
 The system provides **scientifically valid, actionable insights** to help farmers improve efficiency and profitability! 🌾
 
+
+
+
+

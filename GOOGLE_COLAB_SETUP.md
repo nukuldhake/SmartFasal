@@ -234,3 +234,7 @@ pip install -r requirements.txt
 Train in Colab, download to Drive, deploy locally. Simple and efficient!
 
 
+
+
+
+

@@ -200,3 +200,7 @@ You'll see different crops with different confidence scores each time! 🎉
 **The model is working exactly as designed - providing highly confident predictions when conditions are clear, and varied recommendations when conditions are ambiguous.**
 
 
+
+
+
+
